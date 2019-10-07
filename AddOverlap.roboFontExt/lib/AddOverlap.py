@@ -1,12 +1,15 @@
+from vanilla import EditText
 from AppKit import NSImage
-try:
-    from ufoLib.pointPen import AbstractPointPen
-except:
-    from robofab.pens.pointPen import AbstractPointPen
+from fontTools.ufoLib.pointPen import AbstractPointPen
 from lib.UI.toolbarGlyphTools import ToolbarGlyphTools
 from mojo.events import addObserver
+from mojo.extensions import setExtensionDefault, getExtensionDefault, registerExtensionDefaults, removeExtensionDefault
 import math
 import os
+import re
+
+# updated AbstractPointPen to fontTools
+# added UI for the offset value
 
 def getLength(pt1, pt2):
     x1, y1 = pt1
@@ -32,9 +35,8 @@ def pointOnACurve(curve, value):
 
 class AddOverlapPointPen(AbstractPointPen):
 
-    offset = 30
-
-    def __init__(self, selectedPoints=[]):
+    def __init__(self, selectedPoints=[], offset=30):
+        self.offset = int(offset)
         self.selectedPoints = selectedPoints
 
         self._contours = []
@@ -123,10 +125,34 @@ class AddOverlapPointPen(AbstractPointPen):
 class AddOverlapTool(object):
 
     base_path = os.path.dirname(__file__)
+    toolValue = 0
 
     def __init__(self):
 
+        self.prefKey = 'com.okaytype.addOverlap'
+        initialDefaults = {
+            self.pref:   '-30',
+            }
+        registerExtensionDefaults(initialDefaults)
+        self.toolValue = getExtensionDefault(self.pref)
+
         addObserver(self, "addOverlapToolbarItem", "glyphWindowWillShowToolbarItems")
+        addObserver(self, "addOverlapValueUI", "glyphWindowWillOpen")
+
+
+    @property
+    def pref(self):
+        return self.prefKey + '.' + 'addOverlapValue'
+
+    def prefSave(self, sender):
+        setExtensionDefault(self.prefKey+'.addOverlapValue', self.w.t.get())
+        v = getExtensionDefault(self.pref)
+        print('set', v)
+
+    def prefGet(self, sender):
+        v = getExtensionDefault(self.pref)
+        print('get', v)
+
 
     def addOverlapToolbarItem(self, info):
 
@@ -136,7 +162,7 @@ class AddOverlapTool(object):
         identifier = 'addOverlap'
         filename = 'AddOverlapButton.pdf'
         callback = self.addOverlap
-        index=-2
+        index = -2
 
         imagePath = os.path.join(self.base_path, 'resources', filename)
         image = NSImage.alloc().initByReferencingFile_(imagePath)
@@ -152,17 +178,52 @@ class AddOverlapTool(object):
 
         toolbarItems.insert(index, newItem)
 
+
+
+    def addOverlapValueUI(self, window):
+        xywh = (5, 5, 33, 16)
+        self.val = EditText(xywh, 
+            self.toolValue, 
+            sizeStyle='mini', 
+            continuous=True, 
+            callback=self.editTextCallback)
+        window['window'].addGlyphEditorSubview(self.val)
+
+    def editTextCallback(self, sender):
+        self.toolValue = self.onlynumbers(sender.get())
+        if len(self.toolValue) > 0 and self.toolValue[-1] != '-':
+            sender.set(self.toolValue)
+            setExtensionDefault(self.prefKey+'.addOverlapValue', self.toolValue)
+
+    def onlynumbers(self, v):
+        v = v.replace(' ', '')
+        if v == None or v == '': 
+            v = '0'
+        if v == '-0': 
+            v = '0'
+        negpos = ''
+        if v[0] and v[0] == '-' and v != '0':
+            negpos = '-'
+        v = negpos + re.sub(r'[-\D]', '', v)
+        return v
+
+
+
     def addOverlap(self, sender):
+
+        offset = self.toolValue
+        if self.toolValue == '':
+            offset = 0
 
         g = CurrentGlyph()
 
         selection = []
 
-        for p in g.selection:
+        for p in g.selectedPoints:
             p.selected = False
             selection.append((p.x, p.y))
 
-        pen = AddOverlapPointPen(selection)
+        pen = AddOverlapPointPen(selection, offset)
 
         g.drawPoints(pen)
 
@@ -172,6 +233,6 @@ class AddOverlapTool(object):
         pen.drawPoints(g.getPointPen())
 
         g.performUndo()
-        g.update()
+        g.changed()
 
 AddOverlapTool()
