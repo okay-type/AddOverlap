@@ -138,6 +138,8 @@ class AddOverlapTool(object):
 
         addObserver(self, "addOverlapToolbarItem", "glyphWindowWillShowToolbarItems")
         addObserver(self, "addOverlapValueUI", "glyphWindowWillOpen")
+        addObserver(self, 'observerSideuiDrawPreview', 'drawPreview')
+        addObserver(self, 'observerSideuiDraw', 'draw')
 
 
     @property
@@ -207,6 +209,13 @@ class AddOverlapTool(object):
         v = negpos + re.sub(r'[-\D]', '', v)
         return v
 
+    # HIDE IN PREVIEW MODE
+    def observerSideuiDraw(self, notification):
+        if self.val:
+            self.val.show(True)
+    def observerSideuiDrawPreview(self, notification):
+        if self.val:
+            self.val.show(False)
 
 
     def addOverlap(self, sender):

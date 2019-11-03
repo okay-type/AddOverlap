@@ -15,7 +15,7 @@
 	<key>mainScript</key>
 	<string>AddOverlap.py</string>
 	<key>name</key>
-	<string>Add Overlap</string>
+	<string>Add Overlap wUI</string>
 	<key>requiresVersionMajor</key>
 	<string>1</string>
 	<key>requiresVersionMinor</key>
@@ -23,9 +23,9 @@
 	<key>timeStamp</key>
 	<real>1397762029</real>
 	<key>version</key>
-	<string>1.2.1</string>
+	<string>2.0.0</string>
 	<key>repository</key>
-	<string>asaumierdemers/AddOverlap</string>
+	<string>okay-type/AddOverlap</string>
 	<key>extensionPath</key>
 	<string>AddOverlap.roboFontExt</string>
 </dict>
