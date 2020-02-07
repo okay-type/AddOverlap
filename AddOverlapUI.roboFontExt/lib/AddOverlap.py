@@ -1,15 +1,19 @@
-from vanilla import EditText
+from AppKit import NSApp, NSColor, NSTextAlignmentRight, NSTextAlignmentLeft
+from vanilla import EditText, TextBox, Window
 from AppKit import NSImage
 from fontTools.ufoLib.pointPen import AbstractPointPen
 from lib.UI.toolbarGlyphTools import ToolbarGlyphTools
 from mojo.events import addObserver
 from mojo.extensions import setExtensionDefault, getExtensionDefault, registerExtensionDefaults, removeExtensionDefault
+from mojo.UI import CurrentGlyphWindow
+from mojo.UI import CurrentWindow
 import math
 import os
 import re
 
 # updated AbstractPointPen to fontTools
 # added UI for the offset value
+windowViewManger = {}
 
 def getLength(pt1, pt2):
     x1, y1 = pt1
@@ -138,8 +142,7 @@ class AddOverlapTool(object):
 
         addObserver(self, "addOverlapToolbarItem", "glyphWindowWillShowToolbarItems")
         addObserver(self, "addOverlapValueUI", "glyphWindowWillOpen")
-        addObserver(self, 'observerSideuiDrawPreview', 'drawPreview')
-        addObserver(self, 'observerSideuiDraw', 'draw')
+        addObserver(self, 'updateSelfWindow', 'currentGlyphChanged')
 
 
     @property
@@ -180,16 +183,30 @@ class AddOverlapTool(object):
 
         toolbarItems.insert(index, newItem)
 
-
+    @property
+    def wwwindow(self):
+        return CurrentGlyphWindow()
+    @property
+    def bar(self):
+        if not self.wwwindow:
+            return
+        return self.wwwindow.getGlyphStatusBar()
 
     def addOverlapValueUI(self, window):
-        xywh = (5, 5, 33, 16)
-        self.val = EditText(xywh, 
-            self.toolValue, 
-            sizeStyle='mini', 
-            continuous=True, 
-            callback=self.editTextCallback)
-        window['window'].addGlyphEditorSubview(self.val)
+        if not self.bar:
+            return
+        if hasattr(self.bar, "interpolationStatusMenu"):
+            del self.bar.interpolationStatusMenu
+
+        xywh = (-17, 0, 14, 16)
+        self.bar.interpolationStatusLabel = TextBox(xywh, '⋉')
+        self.bar.interpolationStatusLabel.getNSTextField().setAlignment_(NSTextAlignmentLeft)
+
+        xywh = (-56, 4, 40, 12)
+        self.bar.interpolationStatusMenu = EditText(xywh, self.toolValue, sizeStyle='mini', continuous=True, callback=self.editTextCallback)
+        self.bar.interpolationStatusMenu.getNSTextField().setBezeled_(False)
+        self.bar.interpolationStatusMenu.getNSTextField().setBackgroundColor_(NSColor.clearColor())
+        self.bar.interpolationStatusMenu.getNSTextField().setAlignment_(NSTextAlignmentRight)
 
     def editTextCallback(self, sender):
         self.toolValue = self.onlynumbers(sender.get())
@@ -209,13 +226,10 @@ class AddOverlapTool(object):
         v = negpos + re.sub(r'[-\D]', '', v)
         return v
 
-    # HIDE IN PREVIEW MODE
-    def observerSideuiDraw(self, notification):
-        if self.val:
-            self.val.show(True)
-    def observerSideuiDrawPreview(self, notification):
-        if self.val:
-            self.val.show(False)
+    def updateSelfWindow(self, notification):
+        self.window = CurrentWindow()
+
+
 
 
     def addOverlap(self, sender):
