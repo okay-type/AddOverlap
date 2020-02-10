@@ -163,9 +163,9 @@ class AddOverlapTool(object):
 
         toolbarItems = info['toolbarItems']
 
-        label = 'Add Overlap'
-        identifier = 'addOverlap'
-        filename = 'AddOverlapButton.pdf'
+        label = 'Add Overlap w/ UI'
+        identifier = 'addOverlapUI'
+        filename = 'AddOverlapButtonUI.pdf'
         callback = self.addOverlap
         index = -2
 
