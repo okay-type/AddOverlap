@@ -17,13 +17,13 @@
 	<key>name</key>
 	<string>Add Overlap UI</string>
 	<key>requiresVersionMajor</key>
-	<string>1</string>
+	<string>3</string>
 	<key>requiresVersionMinor</key>
-	<string>5</string>
+	<string>0</string>
 	<key>timeStamp</key>
 	<real>1397762031</real>
 	<key>version</key>
-	<string>2.0.2</string>
+	<string>2.0.3</string>
 	<key>repository</key>
 	<string>okay-type/AddOverlapUI</string>
 	<key>extensionPath</key>
