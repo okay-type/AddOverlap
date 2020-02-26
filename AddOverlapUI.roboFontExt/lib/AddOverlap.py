@@ -195,6 +195,8 @@ class AddOverlapTool(object):
     def addOverlapValueUI(self, window):
         if not self.bar:
             return
+        if hasattr(self.bar, "interpolationStatusLabel"):
+            del self.bar.interpolationStatusLabel
         if hasattr(self.bar, "interpolationStatusMenu"):
             del self.bar.interpolationStatusMenu
 
