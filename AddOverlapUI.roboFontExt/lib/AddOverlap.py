@@ -152,11 +152,9 @@ class AddOverlapTool(object):
     def prefSave(self, sender):
         setExtensionDefault(self.prefKey+'.addOverlapValue', self.w.t.get())
         v = getExtensionDefault(self.pref)
-        print('set', v)
 
     def prefGet(self, sender):
         v = getExtensionDefault(self.pref)
-        print('get', v)
 
 
     def addOverlapToolbarItem(self, info):
@@ -200,11 +198,18 @@ class AddOverlapTool(object):
         if hasattr(self.bar, "interpolationStatusMenu"):
             del self.bar.interpolationStatusMenu
 
-        xywh = (-17, 0, 14, 16)
+        # get window name to see if were in singlewindowmode
+        windowType = self.wwwindow.window().getNSWindow().windowName()
+        swmshift = -15
+        xywh = [-17, 0, 14, 16]
+        if windowType == 'SingleFontWindow': # if single window mode
+            xywh[0] += swmshift
         self.bar.interpolationStatusLabel = TextBox(xywh, '⋉')
         self.bar.interpolationStatusLabel.getNSTextField().setAlignment_(NSTextAlignmentLeft)
 
-        xywh = (-56, 4, 40, 12)
+        xywh = [-56, 4, 40, 12]
+        if windowType == 'SingleFontWindow': # if single window mode
+            xywh[0] += swmshift
         self.bar.interpolationStatusMenu = EditText(xywh, self.toolValue, sizeStyle='mini', continuous=True, callback=self.editTextCallback)
         self.bar.interpolationStatusMenu.getNSTextField().setBezeled_(False)
         self.bar.interpolationStatusMenu.getNSTextField().setBackgroundColor_(NSColor.clearColor())
@@ -259,5 +264,9 @@ class AddOverlapTool(object):
 
         g.performUndo()
         g.changed()
+
+
+
+
 
 AddOverlapTool()
