@@ -1,10 +1,10 @@
-from AppKit import NSApp, NSColor, NSTextAlignmentRight, NSTextAlignmentLeft
-from vanilla import EditText, TextBox, Window
+from AppKit import NSColor, NSTextAlignmentRight, NSTextAlignmentLeft
+from vanilla import EditText, TextBox
 from AppKit import NSImage
 from fontTools.ufoLib.pointPen import AbstractPointPen
 from lib.UI.toolbarGlyphTools import ToolbarGlyphTools
 from mojo.events import addObserver
-from mojo.extensions import setExtensionDefault, getExtensionDefault, registerExtensionDefaults, removeExtensionDefault
+from mojo.extensions import setExtensionDefault, getExtensionDefault, registerExtensionDefaults
 from mojo.UI import CurrentGlyphWindow
 from mojo.UI import CurrentWindow
 import math
@@ -15,10 +15,12 @@ import re
 # added UI for the offset value
 windowViewManger = {}
 
+
 def getLength(pt1, pt2):
     x1, y1 = pt1
     x2, y2 = pt2
-    return math.sqrt((x2-x1)**2 + (y2-y1)**2)
+    return math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+
 
 def pointOnACurve(curve, value):
     (x1, y1), (cx1, cy1), (cx2, cy2), (x2, y2) = curve
@@ -32,10 +34,11 @@ def pointOnACurve(curve, value):
     by = (cy2 - cy1) * 3.0 - cy
     ay = y2 - dy - cy - by
 
-    mx = ax*(value)**3 + bx*(value)**2 + cx*(value) + dx
-    my = ay*(value)**3 + by*(value)**2 + cy*(value) + dy
+    mx = ax * (value)**3 + bx * (value)**2 + cx * (value) + dx
+    my = ay * (value)**3 + by * (value)**2 + cy * (value) + dy
 
     return mx, my
+
 
 class AddOverlapPointPen(AbstractPointPen):
 
@@ -67,8 +70,8 @@ class AddOverlapPointPen(AbstractPointPen):
         length = getLength((x1, y1), (x2, y2))
         if length == 0:
             return 0, 0
-        ox = (x2-x1)/length*self.offset
-        oy = (y2-y1)/length*self.offset
+        ox = (x2 - x1) / length * self.offset
+        oy = (y2 - y1) / length * self.offset
         return int(round(ox)), int(round(oy))
 
     def drawPoints(self, outpen):
@@ -82,40 +85,38 @@ class AddOverlapPointPen(AbstractPointPen):
                 currentPoint = pointData["point"]
                 addExtraPoint = None
                 if pointData["segmentType"] and pointData["point"] in self.selectedPoints:
-                    prevPointData = pointsData[i-1]
-                    nextPointData = pointsData[(i+1) % lenPointsData]
+                    prevPointData = pointsData[i - 1]
+                    nextPointData = pointsData[(i + 1) % lenPointsData]
 
                     prevOffsetX, prevOffsetY = self._offset(prevPointData["point"], pointData["point"])
                     nextOffsetX, nextOffsetY = self._offset(pointData["point"], nextPointData["point"])
 
                     if (nextOffsetX, nextOffsetY) == (0, 0) and nextPointData["segmentType"] is None:
                         nextSegment = [
-                            pointsData[(i+3) % lenPointsData]["point"],
-                            pointsData[(i+2) % lenPointsData]["point"],
+                            pointsData[(i + 3) % lenPointsData]["point"],
+                            pointsData[(i + 2) % lenPointsData]["point"],
                             nextPointData["point"],
-                            pointData["point"]
-                            ]
+                            pointData["point"]]
                         newPoint = pointOnACurve(nextSegment, 0.9)
                         nextOffsetX, nextOffsetY = self._offset(pointData["point"], newPoint)
                     addExtraPoint = currentPoint[0] - nextOffsetX, currentPoint[1] - nextOffsetY
 
                     if (prevOffsetX, prevOffsetY) == (0, 0) and prevPointData["segmentType"] is None:
                         prevSegment = [
-                            pointsData[i-3]["point"],
-                            pointsData[i-2]["point"],
+                            pointsData[i - 3]["point"],
+                            pointsData[i - 2]["point"],
                             prevPointData["point"],
-                            pointData["point"]
-                            ]
+                            pointData["point"]]
                         newPoint = pointOnACurve(prevSegment, 0.9)
                         prevOffsetX, prevOffsetY = self._offset(newPoint, pointData["point"])
                     currentPoint = currentPoint[0] + prevOffsetX, currentPoint[1] + prevOffsetY
 
-                outpen.addPoint(currentPoint,
+                outpen.addPoint(
+                    currentPoint,
                     pointData["segmentType"],
                     pointData["smooth"],
                     pointData["name"],
-                    **pointData["kwargs"]
-                    )
+                    **pointData["kwargs"])
 
                 if addExtraPoint:
                     outpen.addPoint(addExtraPoint, "line")
@@ -135,8 +136,7 @@ class AddOverlapTool(object):
 
         self.prefKey = 'com.okaytype.addOverlap'
         initialDefaults = {
-            self.pref:   '-30',
-            }
+            self.pref: '-30'}
         registerExtensionDefaults(initialDefaults)
         self.toolValue = getExtensionDefault(self.pref)
 
@@ -144,18 +144,12 @@ class AddOverlapTool(object):
         addObserver(self, "addOverlapValueUI", "glyphWindowWillOpen")
         addObserver(self, 'updateSelfWindow', 'currentGlyphChanged')
 
-
     @property
     def pref(self):
         return self.prefKey + '.' + 'addOverlapValue'
 
     def prefSave(self, sender):
-        setExtensionDefault(self.prefKey+'.addOverlapValue', self.w.t.get())
-        v = getExtensionDefault(self.pref)
-
-    def prefGet(self, sender):
-        v = getExtensionDefault(self.pref)
-
+        setExtensionDefault(self.prefKey + '.addOverlapValue', self.w.t.get())
 
     def addOverlapToolbarItem(self, info):
 
@@ -170,20 +164,27 @@ class AddOverlapTool(object):
         imagePath = os.path.join(self.base_path, 'resources', filename)
         image = NSImage.alloc().initByReferencingFile_(imagePath)
 
-        view = ToolbarGlyphTools((30, 25),
-            [dict(image=image, toolTip=label)], trackingMode="one")
+        view = ToolbarGlyphTools(
+            (30, 25),
+            [dict(image=image, toolTip=label)],
+            trackingMode="one")
 
-        newItem = dict(itemIdentifier=identifier,
-            label = label,
-            callback = callback,
-            view = view
-        )
+        for item in list(toolbarItems):
+            if item['itemIdentifier'] == identifier:
+                toolbarItems.remove(item)
+
+        newItem = dict(
+            itemIdentifier=identifier,
+            label=label,
+            callback=callback,
+            view=view)
 
         toolbarItems.insert(index, newItem)
 
     @property
     def wwwindow(self):
         return CurrentGlyphWindow()
+
     @property
     def bar(self):
         if not self.wwwindow:
@@ -201,14 +202,15 @@ class AddOverlapTool(object):
         # get window name to see if were in singlewindowmode
         windowType = self.wwwindow.window().getNSWindow().windowName()
         swmshift = -15
+
         xywh = [-17, 0, 14, 16]
-        if windowType == 'SingleFontWindow': # if single window mode
+        if windowType == 'SingleFontWindow':  # if single window mode
             xywh[0] += swmshift
         self.bar.interpolationStatusLabel = TextBox(xywh, '⋉')
         self.bar.interpolationStatusLabel.getNSTextField().setAlignment_(NSTextAlignmentLeft)
 
         xywh = [-56, 4, 40, 12]
-        if windowType == 'SingleFontWindow': # if single window mode
+        if windowType == 'SingleFontWindow':  # if single window mode
             xywh[0] += swmshift
         self.bar.interpolationStatusMenu = EditText(xywh, self.toolValue, sizeStyle='mini', continuous=True, callback=self.editTextCallback)
         self.bar.interpolationStatusMenu.getNSTextField().setBezeled_(False)
@@ -219,13 +221,13 @@ class AddOverlapTool(object):
         self.toolValue = self.onlynumbers(sender.get())
         if len(self.toolValue) > 0 and self.toolValue[-1] != '-':
             sender.set(self.toolValue)
-            setExtensionDefault(self.prefKey+'.addOverlapValue', self.toolValue)
+            setExtensionDefault(self.prefKey + '.addOverlapValue', self.toolValue)
 
     def onlynumbers(self, v):
         v = v.replace(' ', '')
-        if v == None or v == '': 
+        if v is None or v == '':
             v = '0'
-        if v == '-0': 
+        if v == '-0':
             v = '0'
         negpos = ''
         if v[0] and v[0] == '-' and v != '0':
@@ -235,9 +237,6 @@ class AddOverlapTool(object):
 
     def updateSelfWindow(self, notification):
         self.window = CurrentWindow()
-
-
-
 
     def addOverlap(self, sender):
 
@@ -264,9 +263,6 @@ class AddOverlapTool(object):
 
         g.performUndo()
         g.changed()
-
-
-
 
 
 AddOverlapTool()
