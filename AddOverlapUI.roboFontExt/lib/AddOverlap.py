@@ -200,7 +200,10 @@ class AddOverlapTool(object):
             del self.bar.interpolationStatusMenu
 
         # get window name to see if were in singlewindowmode
-        windowType = self.wwwindow.window().getNSWindow().windowName()
+        try:
+            windowType = self.wwwindow.window().getNSWindow().windowName()
+        except AttributeError:
+            windowType = None
         swmshift = -15
 
         xywh = [-17, 0, 14, 16]
